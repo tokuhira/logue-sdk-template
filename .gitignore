@@ -39,10 +39,15 @@
 *.swp
 *.swo
 
-build_minilogue-xd/*
-build_prologue/*
-build_nutekt-digital/*
+build_minilogue-xd/
+build_prologue/
+build_nutekt-digital/
 tags
 .envrc
 
 ./tmp
+
+*.prlgunit
+*.mnlgxdunit
+*.ntkdigunit
+.DS_Store
