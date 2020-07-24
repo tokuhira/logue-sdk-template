@@ -51,3 +51,4 @@ tags
 *.mnlgxdunit
 *.ntkdigunit
 .DS_Store
+.vscode/
