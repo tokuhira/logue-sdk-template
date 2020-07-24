@@ -12,7 +12,11 @@ else
     detected_OS := $(shell uname -s)
 endif
 
-# your minilogue-xd platform dir
+## Project Sources
+include ./project.mk
+
+PLATFORMDIR_ASSERT = $(call assert,$(PLATFORMDIR),PLATFORMDIR is not defined)
+PROJECTDIR_ASSERT = $(call assert,$(PROJECTDIR),PROJECTDIR is not defined)
 TOOLSDIR = $(PLATFORMDIR)/../../tools
 EXTDIR = $(PLATFORMDIR)/../ext
 

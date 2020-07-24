@@ -14,6 +14,9 @@ else
     detected_OS := $(shell uname -s)
 endif
 
+## Project Sources
+include ./project.mk
+
 PLATFORMDIR_ASSERT = $(call assert,$(PLATFORMDIR),PLATFORMDIR is not defined)
 PROJECTDIR_ASSERT = $(call assert,$(PROJECTDIR),PROJECTDIR is not defined)
 TOOLSDIR = $(PLATFORMDIR)/../../tools
@@ -162,7 +165,7 @@ PRE_CROSS:
 	@echo "--- Cross-compiling for target device -----"
 	@echo
 
-all: PRE_ALL cross POST_ALL
+all: PRE_ALL cross wasm POST_ALL
 
 PRE_ALL:
 
@@ -242,6 +245,18 @@ package:
 	@$(ZIP) $(ZIP_ARGS) $(PROJECT).zip $(PKGDIR)
 	@mv $(PROJECT).zip $(PKGARCH)
 	@echo
+
+wasm:
+	@echo "--- Building for Web Assembly -------------"
+	@echo " !! Requires tools/emscripten !!"
+	@echo
+	-$(EMMAKE) make -f WASM.mk
+
+wasm-clean:
+	@echo "--- Cleaning Web Assembly build -----------"
+	@echo " !! Requires tools/emscripten !!"
+	@echo
+	-$(EMMAKE) make -f WASM.mk clean
 
 help:
 	@echo "Usage: make [target]"

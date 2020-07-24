@@ -6,5 +6,4 @@ PKGEXTNAME = mnlgxdunit
 MCUSERIESNAME = STM32F401xC
 PROJECTDIR = .
 
-include ./project.mk
 include ../../platform_stm32f4.mk
