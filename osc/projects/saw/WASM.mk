@@ -1,13 +1,13 @@
 # #############################################################################
 # Oscillator WASM Makefile
 # #############################################################################
-# usage: emmake make -f WASM.mak
+# usage: emmake make -f WASM.mk
 # or via main Makefile wasm target
 
 BUILD_TARGET = TARGET_WASM
 
 ## Project Sources
-include $(PROJECTDIR)/project.mk
+include ./project.mk
 
 PLATFORMDIR_ASSERT = $(call assert,$(PLATFORMDIR),PLATFORMDIR is not defined)
 PROJECTDIR_ASSERT = $(call assert,$(PROJECTDIR),PROJECTDIR is not defined)
@@ -45,13 +45,13 @@ CXXWARN = -Wall -Wno-unknown-attributes
 PKGDIR = $(PROJECT)
 MANIFEST = $(PROJECTDIR)/manifest.json
 PAYLOAD = $(PROJECT).js
-BUILDDIR = $(PROJECTDIR)/build
+BUILDDIR = $(PROJECTDIR)/build_$(PLATFORM)
 OBJDIR = $(BUILDDIR)/emcc_obj
 LSTDIR = $(BUILDDIR)/emcc_lst
 
 CSRC = $(UCSRC)
 CXXSRC = $(UCXXSRC) \
-         $(PROJECTDIR)/tpl/_wasm_unit.cpp \
+         $(PLATFORMDIR)/osc/tpl/_wasm_unit.cpp \
          $(WAB_CPP)/logue_wrapper.cpp \
          $(WAB_CPP)/wab_processor.cpp
 
@@ -77,7 +77,7 @@ DEFS := $(DDEFS) $(UDEFS)
 
 DLIBDIR = $(PROJECTDIR)/ld
 
-LIBS = $(DLIBS) $(ULIBS) $(PROJECTDIR)/ld/wasm_osc_api.a
+LIBS = $(DLIBS) $(ULIBS) $(PLATFORMDIR)/osc/ld/wasm_osc_api.a
 
 LIBDIR := $(patsubst %,-I%,$(DLIBDIR) $(ULIBDIR))
 
@@ -121,11 +121,11 @@ $(JSOBJS) : $(MANIFEST)
 	@echo 'WABModule.manifest = ' > $(OBJDIR)/pre.js
 	@cat $(MANIFEST) >> $(OBJDIR)/pre.js
 
-$(COBJS) : $(OBJDIR)/%.o : %.c WASM.mak
+$(COBJS) : $(OBJDIR)/%.o : %.c WASM.mk
 	@echo "- Compiling $(<F)"
 	@$(CC) -c $(CFLAGS) -I. $(INCDIR) $< -o $@
 
-$(CXXOBJS) : $(OBJDIR)/%.o : %.cpp WASM.mak
+$(CXXOBJS) : $(OBJDIR)/%.o : %.cpp WASM.mk
 	@echo "- Compiling $(<F)"
 	@$(CC) -c $(CXXFLAGS) -I. $(INCDIR) $< -o $@
 
