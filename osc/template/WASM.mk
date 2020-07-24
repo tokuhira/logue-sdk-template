@@ -7,7 +7,7 @@
 BUILD_TARGET = TARGET_WASM
 
 ## Project Sources
-include $(PROJECTDIR)/project.mk
+include ./project.mk
 
 PLATFORMDIR_ASSERT = $(call assert,$(PLATFORMDIR),PLATFORMDIR is not defined)
 PROJECTDIR_ASSERT = $(call assert,$(PROJECTDIR),PROJECTDIR is not defined)
