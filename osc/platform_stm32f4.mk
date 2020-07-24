@@ -17,8 +17,6 @@ endif
 ## Project Sources
 include ./project.mk
 
-PLATFORMDIR_ASSERT = $(call assert,$(PLATFORMDIR),PLATFORMDIR is not defined)
-PROJECTDIR_ASSERT = $(call assert,$(PROJECTDIR),PROJECTDIR is not defined)
 TOOLSDIR = $(PLATFORMDIR)/../../tools
 EXTDIR = $(PLATFORMDIR)/../ext
 
@@ -250,13 +248,13 @@ wasm:
 	@echo "--- Building for Web Assembly -------------"
 	@echo " !! Requires tools/emscripten !!"
 	@echo
-	-$(EMMAKE) make -f WASM.mk
+	-$(EMMAKE) make -f WASM.mk PLATFORM=$(PLATFORM) PLATFORMDIR=$(PLATFORMDIR) PROJECTDIR=$(PROJECTDIR)
 
 wasm-clean:
 	@echo "--- Cleaning Web Assembly build -----------"
 	@echo " !! Requires tools/emscripten !!"
 	@echo
-	-$(EMMAKE) make -f WASM.mk clean
+	-$(EMMAKE) make -f WASM.mk PLATFORM=$(PLATFORM) PLATFORMDIR=$(PLATFORMDIR) PROJECTDIR=$(PROJECTDIR) clean
 
 help:
 	@echo "Usage: make [target]"
