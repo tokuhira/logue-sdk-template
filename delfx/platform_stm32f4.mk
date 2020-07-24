@@ -12,7 +12,11 @@ else
     detected_OS := $(shell uname -s)
 endif
 
-# your minilogue-xd platform dir
+## Project Sources
+include ./project.mk
+
+PLATFORMDIR_ASSERT = $(call assert,$(PLATFORMDIR),PLATFORMDIR is not defined)
+PROJECTDIR_ASSERT = $(call assert,$(PROJECTDIR),PROJECTDIR is not defined)
 TOOLSDIR = $(PLATFORMDIR)/../../tools
 EXTDIR = $(PLATFORMDIR)/../ext
 
@@ -218,9 +222,9 @@ package:
 	@echo Packaging to ./$(PKGARCH)
 	@mkdir -p $(PKGDIR)
 	@cp -a $(MANIFEST) $(PKGDIR)/
-	@sed -i-e "s/\$$PROJECT/$(PROJECT)/g" $(PKGDIR)/$(MANIFEST)
-	@sed -i-e "s/\$$PLATFORM/$(PLATFORM)/g" $(PKGDIR)/$(MANIFEST)
-	@rm $(PKGDIR)/$(MANIFEST)-e
+	@sed -i -e "s/\$$PROJECT/$(PROJECT)/g" $(PKGDIR)/$(MANIFEST)
+	@sed -i -e "s/\$$PLATFORM/$(PLATFORM)/g" $(PKGDIR)/$(MANIFEST)
+	@rm -f $(PKGDIR)/$(MANIFEST)-e
 	@cp -a $(BUILDDIR)/$(PROJECT).bin $(PKGDIR)/$(PAYLOAD)
 	@$(ZIP) $(ZIP_ARGS) $(PROJECT).zip $(PKGDIR)
 	@mv $(PROJECT).zip $(PKGARCH)

@@ -5,5 +5,4 @@ PKGEXTNAME = ntkdigunit
 MCUSERIESNAME = STM32F446xE
 PROJECTDIR = .
 
-include ./project.mk
 include ../../platform_stm32f4.mk

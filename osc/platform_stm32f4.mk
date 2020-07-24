@@ -2,6 +2,8 @@
 # Oscillator Makefile
 # #############################################################################
 
+BUILD_TARGET = TARGET_CORTEX_M4
+
 ifeq ($(OS),Windows_NT)
 ifeq ($(MSYSTEM), MSYS)
     detected_OS := $(shell uname -s)
@@ -12,11 +14,17 @@ else
     detected_OS := $(shell uname -s)
 endif
 
-# your minilogue-xd platform dir
+## Project Sources
+include ./project.mk
+
+PLATFORMDIR_ASSERT = $(call assert,$(PLATFORMDIR),PLATFORMDIR is not defined)
+PROJECTDIR_ASSERT = $(call assert,$(PROJECTDIR),PROJECTDIR is not defined)
 TOOLSDIR = $(PLATFORMDIR)/../../tools
 EXTDIR = $(PLATFORMDIR)/../ext
 
 CMSISDIR = $(EXTDIR)/CMSIS/CMSIS
+
+EMMAKE = $(TOOLSDIR)/emscripten/emsdk/fastcomp/emscripten/emmake
 
 # #############################################################################
 # configure archive utility
@@ -27,7 +35,9 @@ ZIP_ARGS = -r -m -q
 
 ifeq ($(OS),Windows_NT)
 ifneq ($(MSYSTEM), MSYS)
+ifneq ($(MSYSTEM), MINGW64)
   ZIP = $(TOOLSDIR)/zip/bin/zip
+endif
 endif
 endif
 
@@ -58,8 +68,8 @@ RULESPATH = $(LDDIR)
 LDSCRIPT = $(LDDIR)/userosc.ld
 DLIBS = -lm
 
-DADEFS = -D$(MCUSERIESNAME) -DCORTEX_USE_FPU=TRUE -DARM_MATH_CM4
-DDEFS = -D$(MCUSERIESNAME) -DCORTEX_USE_FPU=TRUE -DARM_MATH_CM4 -D__FPU_PRESENT
+DADEFS = -D$(MCUSERIESNAME) -DCORTEX_USE_FPU=TRUE -DARM_MATH_CM4 -D$(BUILD_TARGET)
+DDEFS = -D$(MCUSERIESNAME) -DCORTEX_USE_FPU=TRUE -DARM_MATH_CM4 -D__FPU_PRESENT -D$(BUILD_TARGET)
 
 COPT = -std=c11 -mstructure-size-boundary=8
 CXXOPT = -std=c++11 -fno-rtti -fno-exceptions -fno-non-call-exceptions
@@ -149,16 +159,22 @@ OUTFILES := $(BUILDDIR)/$(PROJECT).elf \
 # targets
 ###############################################################################
 
-all: PRE_ALL $(OBJS) $(OUTFILES) POST_ALL
+cross: PRE_CROSS $(OBJS) $(OUTFILES) package
+
+PRE_CROSS: 
+	@echo "--- Cross-compiling for target device -----"
+	@echo
+
+all: PRE_ALL cross wasm POST_ALL
 
 PRE_ALL:
 
-POST_ALL: package
+POST_ALL: 
 
 $(OBJS): | $(BUILDDIR) $(OBJDIR) $(LSTDIR)
 
 $(BUILDDIR):
-	@echo Compiler Options
+	@echo "- Compiler Options:"
 	@echo $(CC) -c $(CFLAGS) -I. $(INCDIR)
 	@echo
 	@mkdir -p $(BUILDDIR)
@@ -170,59 +186,85 @@ $(LSTDIR):
 	@mkdir -p $(LSTDIR)
 
 $(ASMOBJS) : $(OBJDIR)/%.o : %.s
-	@echo Assembling $(<F)
+	@echo "- Assembling $(<F)"
 	@$(AS) -c $(ASFLAGS) -I. $(INCDIR) $< -o $@
 
 $(ASMXOBJS) : $(OBJDIR)/%.o : %.S
-	@echo Assembling $(<F)
+	@echo "- Assembling $(<F)"
 	@$(CC) -c $(ASXFLAGS) -I. $(INCDIR) $< -o $@
 
 $(COBJS) : $(OBJDIR)/%.o : %.c
-	@echo Compiling $(<F)
+	@echo "- Compiling $(<F)"
 	@$(CC) -c $(CFLAGS) -I. $(INCDIR) $< -o $@
 
 $(CXXOBJS) : $(OBJDIR)/%.o : %.cpp
-	@echo Compiling $(<F)
+	@echo "- Compiling $(<F)"
 	@$(CXXC) -c $(CXXFLAGS) -I. $(INCDIR) $< -o $@
 
 $(BUILDDIR)/$(PROJECT).elf: $(OBJS) $(LDSCRIPT)
-	@echo Linking $@
+	@echo "- Linking $@"
 	@$(LD) $(OBJS) $(LDFLAGS) $(LIBS) -o $@
 
 %.hex: %.elf
-	@echo Creating $@
+	@echo "- Creating $@"
 	@$(HEX) $< $@
 
 %.bin: %.elf
-	@echo Creating $@
+	@echo "- Creating $@"
 	@$(BIN) $< $@
 
 %.dmp: %.elf
-	@echo Creating $@
+	@echo "- Creating $@"
 	@$(OD) $(ODFLAGS) $< > $@
 	@echo
 	@$(SZ) $<
 	@echo
 
 %.list: %.elf
-	@echo Creating $@
+	@echo "- Creating $@"
 	@$(OD) -S $< > $@
 
 clean:
-	@echo Cleaning
+	@echo "--- Cleaning cross-compile products -------"
+	-rm -fR .dep $(OBJDIR) $(LSTDIR) $(BUILDDIR)/$(PROJECT).map $(OUTFILES) $(PKGARCH)
+	@echo
+
+clean-all:
+	@echo "--- Cleaning all build products -----------"
 	-rm -fR .dep $(BUILDDIR) $(PKGARCH)
 	@echo
-	@echo Done
 
 package:
-	@echo Packaging to ./$(PKGARCH)
+	@echo "- Packaging to ./$(PKGARCH)"
 	@mkdir -p $(PKGDIR)
 	@cp -a $(MANIFEST) $(PKGDIR)/
-	@sed -i-e "s/\$$PROJECT/$(PROJECT)/g" $(PKGDIR)/$(MANIFEST)
-	@sed -i-e "s/\$$PLATFORM/$(PLATFORM)/g" $(PKGDIR)/$(MANIFEST)
-	@rm $(PKGDIR)/$(MANIFEST)-e
+	@sed -i -e "s/\$$PROJECT/$(PROJECT)/g" $(PKGDIR)/$(MANIFEST)
+	@sed -i -e "s/\$$PLATFORM/$(PLATFORM)/g" $(PKGDIR)/$(MANIFEST)
+	@rm -f $(PKGDIR)/$(MANIFEST)-e
 	@cp -a $(BUILDDIR)/$(PROJECT).bin $(PKGDIR)/$(PAYLOAD)
 	@$(ZIP) $(ZIP_ARGS) $(PROJECT).zip $(PKGDIR)
 	@mv $(PROJECT).zip $(PKGARCH)
 	@echo
-	@echo Done
+
+wasm:
+	@echo "--- Building for Web Assembly -------------"
+	@echo " !! Requires tools/emscripten !!"
+	@echo
+	-$(EMMAKE) make -f WASM.mk
+
+wasm-clean:
+	@echo "--- Cleaning Web Assembly build -----------"
+	@echo " !! Requires tools/emscripten !!"
+	@echo
+	-$(EMMAKE) make -f WASM.mk clean
+
+help:
+	@echo "Usage: make [target]"
+	@echo
+	@echo " <default>: Cross-compile and package for target device."
+	@echo "     clean: Clean default build products."
+	@echo "      wasm: Build for Web Assembly using Emscripten."
+	@echo "wasm-clean: Clean Web Assembly build products."
+	@echo "       all: Perform both default and wasm targets."
+	@echo " clean-all: Clean all build products."
+	@echo
