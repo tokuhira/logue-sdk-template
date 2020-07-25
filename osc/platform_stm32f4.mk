@@ -14,9 +14,7 @@ else
     detected_OS := $(shell uname -s)
 endif
 
-## Project Sources
-include ./project.mk
-
+# your platform dir
 TOOLSDIR = $(PLATFORMDIR)/../../tools
 EXTDIR = $(PLATFORMDIR)/../ext
 
