@@ -1,5 +1,4 @@
 PLATFORM = minilogue-xd
-# your logue-sdk dir
 LOGUESDKDIR ?= ../../../../logue-sdk
 PLATFORMDIR = $(LOGUESDKDIR)/platform/$(PLATFORM)
 PKGEXTNAME = mnlgxdunit
